@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "SkyVoyage"
+version = "1.0.0"
+id = "artifacts/skyvoyage"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19817
+
+[services.development]
+run = "pnpm --filter @workspace/skyvoyage run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/skyvoyage", "run", "build" ]
+publicDir = "artifacts/skyvoyage/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19817"
+BASE_PATH = "/"

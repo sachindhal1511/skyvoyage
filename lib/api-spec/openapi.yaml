@@ -1,0 +1,816 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: SkyVoyage Weather + Travel Dashboard API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: weather
+    description: Weather operations
+  - name: destinations
+    description: Destination discovery
+  - name: trips
+    description: Trip planning
+  - name: itinerary
+    description: Itinerary management
+  - name: packing
+    description: Packing list management
+  - name: bookmarks
+    description: Bookmarks management
+  - name: notifications
+    description: Notification center
+  - name: analytics
+    description: Travel analytics and insights
+  - name: ai
+    description: AI travel assistant
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── WEATHER ────────────────────────────────────────────────────────────────
+  /weather/current:
+    get:
+      operationId: getCurrentWeather
+      tags: [weather]
+      summary: Get current weather for a location
+      parameters:
+        - in: query
+          name: city
+          schema: { type: string }
+          description: City name to search
+      responses:
+        "200":
+          description: Current weather data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentWeather"
+
+  /weather/hourly:
+    get:
+      operationId: getHourlyForecast
+      tags: [weather]
+      summary: Get hourly weather forecast
+      parameters:
+        - in: query
+          name: city
+          schema: { type: string }
+      responses:
+        "200":
+          description: Hourly forecast
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HourlyForecast"
+
+  /weather/weekly:
+    get:
+      operationId: getWeeklyForecast
+      tags: [weather]
+      summary: Get 7-day weather forecast
+      parameters:
+        - in: query
+          name: city
+          schema: { type: string }
+      responses:
+        "200":
+          description: 7-day forecast
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DailyForecast"
+
+  # ─── DESTINATIONS ────────────────────────────────────────────────────────────
+  /destinations:
+    get:
+      operationId: getDestinations
+      tags: [destinations]
+      summary: List destinations with optional filters
+      parameters:
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: budget
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of destinations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Destination"
+
+  /destinations/{id}:
+    get:
+      operationId: getDestination
+      tags: [destinations]
+      summary: Get a single destination by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Destination detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Destination"
+
+  /destinations/featured:
+    get:
+      operationId: getFeaturedDestinations
+      tags: [destinations]
+      summary: Get featured/trending destinations
+      responses:
+        "200":
+          description: Featured destinations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Destination"
+
+  # ─── TRIPS ──────────────────────────────────────────────────────────────────
+  /trips:
+    get:
+      operationId: getTrips
+      tags: [trips]
+      summary: List all trips
+      responses:
+        "200":
+          description: List of trips
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trip"
+    post:
+      operationId: createTrip
+      tags: [trips]
+      summary: Create a new trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TripInput"
+      responses:
+        "201":
+          description: Created trip
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+
+  /trips/{id}:
+    get:
+      operationId: getTrip
+      tags: [trips]
+      summary: Get a trip by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Trip detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+    patch:
+      operationId: updateTrip
+      tags: [trips]
+      summary: Update a trip
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TripUpdate"
+      responses:
+        "200":
+          description: Updated trip
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+    delete:
+      operationId: deleteTrip
+      tags: [trips]
+      summary: Delete a trip
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── ITINERARY ──────────────────────────────────────────────────────────────
+  /trips/{tripId}/itinerary:
+    get:
+      operationId: getItinerary
+      tags: [itinerary]
+      summary: Get itinerary items for a trip
+      parameters:
+        - in: path
+          name: tripId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Itinerary items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ItineraryItem"
+    post:
+      operationId: createItineraryItem
+      tags: [itinerary]
+      summary: Add an item to the itinerary
+      parameters:
+        - in: path
+          name: tripId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItineraryItemInput"
+      responses:
+        "201":
+          description: Created itinerary item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItineraryItem"
+
+  /trips/{tripId}/itinerary/{itemId}:
+    delete:
+      operationId: deleteItineraryItem
+      tags: [itinerary]
+      summary: Remove an itinerary item
+      parameters:
+        - in: path
+          name: tripId
+          required: true
+          schema: { type: integer }
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── PACKING ────────────────────────────────────────────────────────────────
+  /trips/{tripId}/packing:
+    get:
+      operationId: getPackingList
+      tags: [packing]
+      summary: Get packing list for a trip
+      parameters:
+        - in: path
+          name: tripId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Packing list items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PackingItem"
+    post:
+      operationId: createPackingItem
+      tags: [packing]
+      summary: Add a packing item
+      parameters:
+        - in: path
+          name: tripId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PackingItemInput"
+      responses:
+        "201":
+          description: Created packing item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PackingItem"
+
+  /trips/{tripId}/packing/{itemId}:
+    patch:
+      operationId: updatePackingItem
+      tags: [packing]
+      summary: Toggle packed status or update item
+      parameters:
+        - in: path
+          name: tripId
+          required: true
+          schema: { type: integer }
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PackingItemUpdate"
+      responses:
+        "200":
+          description: Updated item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PackingItem"
+    delete:
+      operationId: deletePackingItem
+      tags: [packing]
+      summary: Delete a packing item
+      parameters:
+        - in: path
+          name: tripId
+          required: true
+          schema: { type: integer }
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── BOOKMARKS ──────────────────────────────────────────────────────────────
+  /bookmarks:
+    get:
+      operationId: getBookmarks
+      tags: [bookmarks]
+      summary: Get all bookmarks
+      responses:
+        "200":
+          description: List of bookmarks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bookmark"
+    post:
+      operationId: createBookmark
+      tags: [bookmarks]
+      summary: Bookmark a destination or trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookmarkInput"
+      responses:
+        "201":
+          description: Created bookmark
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bookmark"
+
+  /bookmarks/{id}:
+    delete:
+      operationId: deleteBookmark
+      tags: [bookmarks]
+      summary: Remove a bookmark
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── NOTIFICATIONS ──────────────────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: Get all notifications
+      responses:
+        "200":
+          description: Notifications list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  # ─── ANALYTICS ──────────────────────────────────────────────────────────────
+  /analytics/summary:
+    get:
+      operationId: getAnalyticsSummary
+      tags: [analytics]
+      summary: Get travel analytics summary stats
+      responses:
+        "200":
+          description: Summary stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsSummary"
+
+  /analytics/temperature-trends:
+    get:
+      operationId: getTemperatureTrends
+      tags: [analytics]
+      summary: Get temperature trend data for charts
+      parameters:
+        - in: query
+          name: city
+          schema: { type: string }
+      responses:
+        "200":
+          description: Temperature trend data points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TemperaturePoint"
+
+  /analytics/popular-destinations:
+    get:
+      operationId: getPopularDestinations
+      tags: [analytics]
+      summary: Get popular destination statistics
+      responses:
+        "200":
+          description: Popular destinations with visit counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DestinationStat"
+
+  # ─── AI ASSISTANT ────────────────────────────────────────────────────────────
+  /ai/suggestions:
+    get:
+      operationId: getAiSuggestions
+      tags: [ai]
+      summary: Get AI travel suggestions
+      parameters:
+        - in: query
+          name: context
+          schema: { type: string }
+          description: Context for suggestions (e.g. destination or season)
+      responses:
+        "200":
+          description: AI travel suggestions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiSuggestion"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string }
+
+    # ─── WEATHER ──────────────────────────────────────────────────────────────
+    CurrentWeather:
+      type: object
+      required: [city, country, temperature, condition, humidity, windSpeed, uvIndex, sunrise, sunset, feelsLike, visibility, airQuality]
+      properties:
+        city: { type: string }
+        country: { type: string }
+        temperature: { type: number }
+        condition: { type: string }
+        conditionCode: { type: string }
+        humidity: { type: integer }
+        windSpeed: { type: number }
+        uvIndex: { type: number }
+        sunrise: { type: string }
+        sunset: { type: string }
+        feelsLike: { type: number }
+        visibility: { type: number }
+        airQuality: { type: integer }
+        airQualityLabel: { type: string }
+        precipitation: { type: number }
+
+    HourlyForecast:
+      type: object
+      required: [hour, temperature, condition, precipitation]
+      properties:
+        hour: { type: string }
+        temperature: { type: number }
+        condition: { type: string }
+        conditionCode: { type: string }
+        precipitation: { type: number }
+        windSpeed: { type: number }
+
+    DailyForecast:
+      type: object
+      required: [date, dayName, high, low, condition, precipitation]
+      properties:
+        date: { type: string }
+        dayName: { type: string }
+        high: { type: number }
+        low: { type: number }
+        condition: { type: string }
+        conditionCode: { type: string }
+        precipitation: { type: number }
+        humidity: { type: integer }
+
+    # ─── DESTINATIONS ─────────────────────────────────────────────────────────
+    Destination:
+      type: object
+      required: [id, name, country, category, rating, travelScore, budgetLevel, bestSeason, avgTemperature, imageUrl, description]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        country: { type: string }
+        category: { type: string }
+        rating: { type: number }
+        travelScore: { type: integer }
+        budgetLevel: { type: string }
+        bestSeason: { type: string }
+        avgTemperature: { type: number }
+        imageUrl: { type: string }
+        description: { type: string }
+        currency: { type: string }
+        language: { type: string }
+        timezone: { type: string }
+        isFeatured: { type: boolean }
+        estimatedDailyBudget: { type: number }
+        tags:
+          type: array
+          items: { type: string }
+
+    # ─── TRIPS ────────────────────────────────────────────────────────────────
+    Trip:
+      type: object
+      required: [id, title, destination, startDate, endDate, budget, status, interests, createdAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        destination: { type: string }
+        destinationId: { type: ["integer", "null"] }
+        startDate: { type: string }
+        endDate: { type: string }
+        budget: { type: number }
+        status: { type: string }
+        interests:
+          type: array
+          items: { type: string }
+        notes: { type: ["string", "null"] }
+        coverImageUrl: { type: ["string", "null"] }
+        estimatedSpend: { type: ["number", "null"] }
+        createdAt: { type: string }
+
+    TripInput:
+      type: object
+      required: [title, destination, startDate, endDate, budget, interests]
+      properties:
+        title: { type: string, minLength: 1 }
+        destination: { type: string, minLength: 1 }
+        destinationId: { type: ["integer", "null"] }
+        startDate: { type: string }
+        endDate: { type: string }
+        budget: { type: number }
+        interests:
+          type: array
+          items: { type: string }
+        notes: { type: string }
+        coverImageUrl: { type: string }
+
+    TripUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        destination: { type: string }
+        startDate: { type: string }
+        endDate: { type: string }
+        budget: { type: number }
+        status: { type: string }
+        interests:
+          type: array
+          items: { type: string }
+        notes: { type: string }
+        coverImageUrl: { type: string }
+        estimatedSpend: { type: number }
+
+    # ─── ITINERARY ────────────────────────────────────────────────────────────
+    ItineraryItem:
+      type: object
+      required: [id, tripId, date, timeOfDay, type, title, duration]
+      properties:
+        id: { type: integer }
+        tripId: { type: integer }
+        date: { type: string }
+        timeOfDay: { type: string }
+        type: { type: string }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        location: { type: ["string", "null"] }
+        duration: { type: integer }
+        cost: { type: ["number", "null"] }
+        notes: { type: ["string", "null"] }
+
+    ItineraryItemInput:
+      type: object
+      required: [date, timeOfDay, type, title, duration]
+      properties:
+        date: { type: string }
+        timeOfDay: { type: string }
+        type: { type: string }
+        title: { type: string, minLength: 1 }
+        description: { type: string }
+        location: { type: string }
+        duration: { type: integer }
+        cost: { type: number }
+        notes: { type: string }
+
+    # ─── PACKING ──────────────────────────────────────────────────────────────
+    PackingItem:
+      type: object
+      required: [id, tripId, name, category, isPacked, isCustom]
+      properties:
+        id: { type: integer }
+        tripId: { type: integer }
+        name: { type: string }
+        category: { type: string }
+        isPacked: { type: boolean }
+        isCustom: { type: boolean }
+        quantity: { type: ["integer", "null"] }
+
+    PackingItemInput:
+      type: object
+      required: [name, category]
+      properties:
+        name: { type: string, minLength: 1 }
+        category: { type: string }
+        quantity: { type: integer }
+        isCustom: { type: boolean }
+
+    PackingItemUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        isPacked: { type: boolean }
+        category: { type: string }
+        quantity: { type: integer }
+
+    # ─── BOOKMARKS ────────────────────────────────────────────────────────────
+    Bookmark:
+      type: object
+      required: [id, type, referenceId, title, imageUrl, createdAt]
+      properties:
+        id: { type: integer }
+        type: { type: string }
+        referenceId: { type: integer }
+        title: { type: string }
+        subtitle: { type: ["string", "null"] }
+        imageUrl: { type: string }
+        createdAt: { type: string }
+
+    BookmarkInput:
+      type: object
+      required: [type, referenceId, title, imageUrl]
+      properties:
+        type: { type: string }
+        referenceId: { type: integer }
+        title: { type: string, minLength: 1 }
+        subtitle: { type: string }
+        imageUrl: { type: string }
+
+    # ─── NOTIFICATIONS ────────────────────────────────────────────────────────
+    Notification:
+      type: object
+      required: [id, type, title, message, isRead, createdAt]
+      properties:
+        id: { type: integer }
+        type: { type: string }
+        title: { type: string }
+        message: { type: string }
+        isRead: { type: boolean }
+        createdAt: { type: string }
+        actionUrl: { type: ["string", "null"] }
+
+    # ─── ANALYTICS ────────────────────────────────────────────────────────────
+    AnalyticsSummary:
+      type: object
+      required: [totalTrips, destinationsVisited, upcomingTrips, totalSpend, savedDestinations]
+      properties:
+        totalTrips: { type: integer }
+        destinationsVisited: { type: integer }
+        upcomingTrips: { type: integer }
+        totalSpend: { type: number }
+        savedDestinations: { type: integer }
+        mostVisitedRegion: { type: string }
+        avgTripDuration: { type: number }
+
+    TemperaturePoint:
+      type: object
+      required: [month, high, low, rainfall]
+      properties:
+        month: { type: string }
+        high: { type: number }
+        low: { type: number }
+        rainfall: { type: number }
+
+    DestinationStat:
+      type: object
+      required: [name, country, visits, score]
+      properties:
+        name: { type: string }
+        country: { type: string }
+        visits: { type: integer }
+        score: { type: number }
+        imageUrl: { type: string }
+
+    # ─── AI ───────────────────────────────────────────────────────────────────
+    AiSuggestion:
+      type: object
+      required: [id, category, message, confidence]
+      properties:
+        id: { type: integer }
+        category: { type: string }
+        message: { type: string }
+        confidence: { type: number }
+        actionLabel: { type: ["string", "null"] }
+        actionUrl: { type: ["string", "null"] }
+        icon: { type: string }
